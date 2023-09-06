@@ -1,73 +1,65 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" /></a>
-</p>
+# Link Lil
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Link Lil is a simple API prototype for link shortening.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Features
 
-## Description
+- Shrink url
+- Get full url by shrinked url
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Installation and start
 
-## Installation
+Link Lil requires [Docker](https://www.docker.com) and [Node.js](https://nodejs.org/) v16+ to run.
 
-```bash
-$ npm install
+Compose and run containers for MySQL and Redis servers. Wait for the servers weill be ready for connections.
+```sh
+docker-compose up
+```
+Install the dependencies, build app and start the server.
+```sh
+cd link-lil
+npm i
+npm run build
+npm run start:prod
 ```
 
-## Running the app
+## Usage
+To make requests to the API, you can use the platform API for developers, for example [Postman](https://www.postman.com).
+##### Shrink URL
 
-```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+To get a shrinked URL, complete the **`POST` request** with the full URL in the body:
+```json
+{
+  "url": "https://full-url"
+}
 ```
+to the **endpoint: `{{url}}/shrink-url/`**
+##### Get full URL back
 
-## Test
-
-```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+To get a full URL, complete the **`GET` request** with the shrinked URL in the body:
+```json
+{
+  "url": "https://short-url"
+}
 ```
+to the **endpoint: `{{url}}/full-url/`**
 
-## Support
+here **url** is `http://localhost:3000` in case of local server.
+## Thinking about scaling
+To scale this service to handle 10,000 URL generation requests per second and 100,000 URL resolve requests per second, we need a distributed architecture:
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+**URL Generation:** We would implement a distributed key generation system. It can share a set of URLs between different servers using sharding. For example, you can specify that server 1 generates hashes for URLs beginning with the letters A-M and server 2 for URLs beginning with the letters N-Z. This separation will reduce the likelihood of collisions.
 
-## Stay in touch
+**URL Resolution:** For URL resolution, horizontal scaling is essential. We would employ a load balancer in front of multiple service instances. This setup distributes incoming requests evenly, preventing any single instance from becoming a bottleneck.
 
-- Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+**Data Storage:** Data should be stored in a distributed database. For example setting up a sharded MySQL environment. Sharding divides the dataset into smaller, more manageable pieces, distributing the load across multiple servers.
+
+**Caching:** Redis would continue to play a crucial role as a cache for frequently accessed URLs. Caching reduces the load on the database, speeding up response times.
+
+**Data Storage:** We would implement a data storage policy based on access frequency. Older data, such as short URLs that haven't been accessed for a defined period, would be archived. Additionally, implementing a garbage collection system for cleaning  short URLs that are no longer in use.
+
 
 ## License
 
-Nest is [MIT licensed](LICENSE).
+MIT
+
